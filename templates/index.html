@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}首页 - 合肥经开区初中音乐考编面试系统{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>首页看板</h2>
+    <p class="page-desc">欢迎回来！笔试排名第{{user.written_rank}}，面试是翻盘的关键</p>
+</div>
+<!-- 备考提示 -->
+<div class="alert alert-important">
+    <strong>你的位置：</strong>笔试第{{user.written_rank}}名（共{{user.written_total}}人进面），
+    招聘{{user.recruit_count}}人。面试占比60%，是翻盘的关键！
+    <a href="{{ url_for('tips') }}?tab=tip&cat=16" class="alert-link">查看翻盘策略 →</a>
+</div>
+<!-- 统计卡片 -->
+<div class="stat-cards">
+    <div class="stat-card">
+        <div class="stat-number">{{ question_count }}</div>
+        <div class="stat-label">面试题目</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ tip_count }}</div>
+        <div class="stat-label">技巧与指南</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ record_count }}</div>
+        <div class="stat-label">模拟次数</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ bookmark_count }}</div>
+        <div class="stat-label">收藏题目</div>
+    </div>
+</div>
+<!-- 快速入口 -->
+<div class="quick-actions">
+    <a href="{{ url_for('simulate', mode='structured') }}" class="action-btn structured-btn">
+        <span class="action-icon">&#9654;</span>
+        <span class="action-text">
+            <strong>结构化面试模拟</strong>
+            <small>5分钟答题 + 即时评分</small>
+        </span>
+    </a>
+    <a href="{{ url_for('simulate', mode='trial') }}" class="action-btn trial-btn">
+        <span class="action-icon">&#9654;</span>
+        <span class="action-text">
+            <strong>试讲模拟</strong>
+            <small>15分钟无生上课 + 评分</small>
+        </span>
+    </a>
+    <a href="{{ url_for('questions') }}" class="action-btn question-btn">
+        <span class="action-icon">&#9733;</span>
+        <span class="action-text">
+            <strong>刷题库</strong>
+            <small>结构化 / 试讲题目浏览</small>
+        </span>
+    </a>
+    <a href="{{ url_for('tips') }}" class="action-btn tip-btn">
+        <span class="action-icon">&#9998;</span>
+        <span class="action-text">
+            <strong>面试技巧</strong>
+            <small>避坑指南 + 答题框架</small>
+        </span>
+    </a>
+</div>
+<!-- 最近记录 -->
+<div class="section">
+    <div class="section-header">
+        <h3>最近练习</h3>
+        <a href="{{ url_for('records') }}">查看全部 →</a>
+    </div>
+    {% if recent %}
+    <table class="data-table">
+        <thead><tr><th>题目</th><th>模式</th><th>时间</th><th>状态</th></tr></thead>
+        <tbody>
+            {% for r in recent %}
+            <tr>
+                <td><a href="{{ url_for('simulate') }}?qid={{r.question_id}}">{{ r.title }}</a></td>
+                <td><span class="badge {{r.mode}}">{{ "结构化" if r.mode=="structured" else "试讲" }}</span></td>
+                <td>{{ r.started_at|date }}</td>
+                <td>{{ "已完成" if r.ended_at else "未完成" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>还没有练习记录</p>
+        <a href="{{ url_for('simulate') }}" class="btn-primary">开始第一次模拟</a>
+    </div>
+    {% endif %}
+</div>
+<!-- 今日统计 -->
+{% if daily %}
+<div class="section">
+    <div class="section-header"><h3>今日完成</h3></div>
+    <p>模拟练习 {{ daily.simulations_done }} 次</p>
+</div>
+{% endif %}
+{% endblock %}
