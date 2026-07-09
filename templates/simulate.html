@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}模拟面试 - 合肥经开区初中音乐考编面试系统{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>模拟面试</h2>
+    <div class="tab-bar">
+        <a href="{{ url_for('simulate', mode='structured') }}" class="tab {% if mode=='structured' %}active{% endif %}">结构化面试</a>
+        <a href="{{ url_for('simulate', mode='trial') }}" class="tab {% if mode=='trial' %}active{% endif %}">试讲模拟</a>
+    </div>
+</div>
+{% if no_questions %}
+<div class="empty-state"><p>该分类暂无题目</p></div>
+{% else %}
+<!-- 题目选择区 -->
+<div class="filter-bar">
+    <label>选择分类：</label>
+    {% for c in categories %}
+    <a href="{{ url_for('simulate', mode=mode, cat=c.id) }}" class="filter-btn {% if active_cat==c.id|string %}active{% endif %}">{{ c.name }}</a>
+    {% endfor %}
+</div>
+<!-- 当前题目 -->
+<div class="sim-card" id="simCard">
+    <div class="sim-header">
+        <span class="badge {{ mode }}">{{ "结构化面试" if mode=="structured" else "试讲" }}</span>
+        <span class="badge diff-{{ question.difficulty }}">难度{{ question.difficulty }}/5</span>
+        <span class="cat-label">{{ question.cat_name }}</span>
+    </div>
+    <h3 class="sim-title">{{ question.title }}</h3>
+    <div class="sim-content">{{ question.content|replace('\n', '<br>')|safe }}</div>
+    <!-- 控制区 -->
+    <div class="sim-timer" id="simTimer">
+        <div class="timer-display" id="timerDisplay">
+            <span id="minutes">00</span>:<span id="seconds">00</span>
+        </div>
+        <div class="timer-label" id="timerLabel">
+            {% if mode=="structured" %}
+            准备时间1分钟 → 答题时间5分钟
+            {% else %}
+            备课时间10分钟 → 试讲15分钟
+            {% endif %}
+        </div>
+    </div>
+    <div class="sim-controls" id="simControls">
+        <button class="btn-primary btn-large" onclick="startPrep()" id="startBtn">
+            开始模拟（准备计时）
+        </button>
+    </div>
+</div>
+<!-- 评分区（隐藏） -->
+<div class="score-section" id="scoreSection" style="display:none;">
+    <h3>自我评分</h3>
+    <form id="scoreForm">
+        <div id="scoreDimensions">
+            {% if mode=="structured" %}
+            {% set dims = [{"id":"logic","name":"逻辑清晰度","max":25,"desc":"观点明确、条理清晰"},
+                           {"id":"education","name":"教育理念","max":25,"desc":"体现素质教育理念"},
+                           {"id":"language","name":"语言表达","max":25,"desc":"表达流畅有感染力"},
+                           {"id":"mentality","name":"心理素质","max":25,"desc":"情绪稳定自信大方"}] %}
+            {% else %}
+            {% set dims = [{"id":"objective","name":"教学目标","max":20,"desc":"目标明确符合课标"},
+                           {"id":"design","name":"教学设计","max":25,"desc":"环节完整方法得当"},
+                           {"id":"implementation","name":"教学实施","max":30,"desc":"讲授清晰互动有效"},
+                           {"id":"quality","name":"教师素养","max":25,"desc":"教态自然专业扎实"}] %}
+            {% endif %}
+            {% for d in dims %}
+            <div class="dimension-row">
+                <div class="dim-info">
+                    <strong>{{ d.name }}</strong>
+                    <small>{{ d.desc }}</small>
+                </div>
+                <div class="dim-input">
+                    <input type="range" min="0" max="{{ d.max }}" value="{{ d.max//2+5 }}"
+                        oninput="this.nextElementSibling.textContent=this.value"
+                        data-dim="{{ d.id }}" data-max="{{ d.max }}">
+                    <span>{{ d.max//2+5 }}</span>/{{ d.max }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="form-group">
+            <label>备注（选填）</label>
+            <textarea id="simNotes" rows="3" placeholder="记录答题中的得失点..."></textarea>
+        </div>
+        <button type="button" class="btn-primary" onclick="submitScore()">提交评分</button>
+    </form>
+</div>
+{% endif %}
+<script>
+var timerInterval;
+var phase = 'idle'; // idle, prep, answer, done
+var prepSecs = {{ prep_time }};
+var ansSecs = {{ ans_time }};
+var elapsed = 0;
+var prepStart, ansStart;
+
+function updateTimer(secs) {
+    var m = Math.floor(secs/60);
+    var s = secs % 60;
+    document.getElementById('minutes').textContent = String(m).padStart(2,'0');
+    document.getElementById('seconds').textContent = String(s).padStart(2,'0');
+}
+
+function startPrep() {
+    phase = 'prep';
+    elapsed = 0;
+    prepStart = new Date();
+    document.getElementById('timerLabel').textContent = '准备计时中...';
+    document.getElementById('startBtn').textContent = '准备中...';
+    document.getElementById('startBtn').disabled = true;
+    timerInterval = setInterval(function() {
+        elapsed++;
+        updateTimer(elapsed);
+        if (elapsed >= prepSecs) {
+            clearInterval(timerInterval);
+            startAnswer();
+        }
+    }, 1000);
+}
+
+function startAnswer() {
+    phase = 'answer';
+    ansStart = new Date();
+    elapsed = 0;
+    updateTimer(0);
+    document.getElementById('timerLabel').textContent = '答题中...';
+    document.getElementById('startBtn').textContent = '结束答题';
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('startBtn').onclick = endSimulation;
+    timerInterval = setInterval(function() {
+        elapsed++;
+        updateTimer(elapsed);
+        if (elapsed >= ansSecs) {
+            clearInterval(timerInterval);
+            endSimulation();
+        }
+    }, 1000);
+}
+
+function endSimulation() {
+    clearInterval(timerInterval);
+    phase = 'done';
+    var totalSecs = elapsed;
+    var prepActual = Math.round((ansStart - prepStart)/1000);
+    document.getElementById('timerLabel').textContent = '答题结束！用时' + totalSecs + '秒';
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('scoreSection').style.display = 'block';
+    // 存储计时数据
+    window._simData = {
+        question_id: {{ question.id }},
+        mode: '{{ mode }}',
+        prep_secs: prepActual,
+        ans_secs: totalSecs
+    };
+}
+
+function submitScore() {
+    var scores = [];
+    document.querySelectorAll('.dim-input input[type="range"]').forEach(function(el) {
+        scores.push({
+            dimension: el.dataset.dim,
+            score: parseInt(el.value),
+            max: parseInt(el.dataset.max)
+        });
+    });
+    var data = window._simData || {};
+    data.scores = scores;
+    data.notes = document.getElementById('simNotes').value;
+    fetch('/api/simulate/complete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(function(resp) {
+        document.getElementById('scoreSection').innerHTML =
+            '<div class="success-msg"><h3>&#10003; 评分已保存</h3>' +
+            '<p>继续练习或查看 <a href="{{ url_for("records") }}">练习记录</a></p>' +
+            '<a href="{{ url_for("simulate", mode=mode) }}" class="btn-primary">再来一题</a></div>';
+    });
+}
+</script>
+{% endblock %}
