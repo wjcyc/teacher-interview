@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}成绩统计 - 合肥经开区初中音乐考编面试系统{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>成绩统计</h2>
+</div>
+<div class="stats-grid">
+    <!-- 各维度评分 -->
+    <div class="section">
+        <div class="section-header"><h3>各维度平均分</h3></div>
+        {% if dim_scores %}
+        <table class="data-table">
+            <thead><tr><th>维度</th><th>平均分</th><th>满分</th><th>得分率</th><th>练习次数</th></tr></thead>
+            <tbody>
+                {% for d in dim_scores %}
+                <tr>
+                    <td>{{ d.dimension }}</td>
+                    <td>{{ "%.1f"|format(d.avg_score) }}</td>
+                    <td>{{ "%.0f"|format(d.avg_max) }}</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:{{ (d.avg_score/d.avg_max*100)|round }}%"></div>
+                        </div>
+                        {{ "%.0f"|format(d.avg_score/d.avg_max*100) }}%
+                    </td>
+                    <td>{{ d.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>暂无评分数据</p>
+        {% endif %}
+    </div>
+    <!-- 近期练习趋势 -->
+    <div class="section">
+        <div class="section-header"><h3>近30天练习情况</h3></div>
+        {% if days30 %}
+        <div class="trend-chart" id="trendChart">
+            {% set max_val = days30|map(attribute='simulations_done')|max %}
+            {% for d in days30|reverse %}
+            <div class="trend-bar-wrapper" title="{{d.stat_date}}: {{d.simulations_done}}次模拟">
+                <div class="trend-bar" style="height:{{ (d.simulations_done/max_val*100)|round if max_val>0 else 0 }}%"></div>
+                <span class="trend-label">{{ d.stat_date[5:] }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>暂无练习数据</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
