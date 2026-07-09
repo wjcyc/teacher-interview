@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}题库 - 合肥经开区初中音乐考编面试系统{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>题库练习</h2>
+    <div class="tab-bar">
+        <a href="{{ url_for('questions', type='structured') }}" class="tab {% if active_type=='structured' %}active{% endif %}">结构化面试</a>
+        <a href="{{ url_for('questions', type='trial') }}" class="tab {% if active_type=='trial' %}active{% endif %}">试讲题目</a>
+    </div>
+</div>
+<div class="toolbar">
+    <div class="filter-group">
+        {% for c in categories %}
+        <a href="{{ url_for('questions', type=active_type, cat=c.id) }}" class="filter-btn {% if active_cat==c.id|string %}active{% endif %}">{{ c.name }}</a>
+        {% endfor %}
+        <a href="{{ url_for('questions', type=active_type) }}" class="filter-btn {% if not active_cat %}active{% endif %}">全部</a>
+    </div>
+    <form method="GET" class="search-form">
+        <input type="hidden" name="type" value="{{ active_type }}">
+        <input type="text" name="q" placeholder="搜索题目..." value="{{ search }}" class="search-input">
+        <button type="submit" class="search-btn">搜索</button>
+    </form>
+</div>
+<div class="question-list">
+    {% for q in questions %}
+    <div class="question-card" data-id="{{ q.id }}">
+        <div class="qc-header">
+            <span class="badge diff-{{ q.difficulty }}">难度{{ q.difficulty }}/5</span>
+            <span class="badge cat-badge">{{ q.cat_name }}</span>
+            <button class="bookmark-btn {% if q.id in bookmark_ids %}bookmarked{% endif %}"
+                onclick="toggleBookmark({{ q.id }})">
+                {% if q.id in bookmark_ids %}&#9829;{% else %}&#9825;{% endif %}
+            </button>
+        </div>
+        <h3 class="qc-title">{{ q.title }}</h3>
+        <div class="qc-content">{{ q.content|replace('\n', '<br>')|safe }}</div>
+        <div class="qc-actions">
+            <button class="btn-outline" onclick="showAnswer({{ q.id }})">查看答题思路</button>
+            <a href="{{ url_for('simulate', mode=active_type) }}?qid={{ q.id }}" class="btn-primary-sm">开始模拟</a>
+        </div>
+    </div>
+    {% endfor %}
+    {% if not questions %}
+    <div class="empty-state"><p>暂无题目</p></div>
+    {% endif %}
+</div>
+<!-- 答题思路弹窗 -->
+<div id="answerModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>答题思路</h3>
+            <button onclick="closeModal()" class="close-btn">&times;</button>
+        </div>
+        <div id="answerContent" class="modal-body"></div>
+    </div>
+</div>
+<script>
+function showAnswer(id) {
+    fetch('/api/questions/' + id)
+        .then(r => r.json())
+        .then(q => {
+            var html = '<h4>' + q.title + '</h4>';
+            if (q.answer_outline) {
+                html += '<div class="answer-text">' + q.answer_outline.replace(/\n/g, '<br>') + '</div>';
+            } else {
+                html += '<p>暂无参考思路</p>';
+            }
+            document.getElementById('answerContent').innerHTML = html;
+            document.getElementById('answerModal').style.display = 'flex';
+        });
+}
+function closeModal() {
+    document.getElementById('answerModal').style.display = 'none';
+}
+function toggleBookmark(id) {
+    fetch('/api/questions/' + id + '/bookmark', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'})
+        .then(r => r.json())
+        .then(d => {
+            var btn = document.querySelector('.question-card[data-id="'+id+'"] .bookmark-btn');
+            if (d.bookmarked) { btn.classList.add('bookmarked'); btn.innerHTML = '&#9829;'; }
+            else { btn.classList.remove('bookmarked'); btn.innerHTML = '&#9825;'; }
+        });
+}
+</script>
+{% endblock %}
