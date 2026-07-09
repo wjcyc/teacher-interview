@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}合肥经开区初中音乐考编面试系统{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边导航 -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1>合肥经开区</h1>
+                <p class="subtitle">初中音乐·考编面试</p>
+            </div>
+            <div class="user-rank">
+                <span class="rank-badge rank-{{user.written_rank if user.written_rank<=11 else 'danger'}}">
+                    #{{user.written_rank}}
+                </span>
+                <div class="rank-info">
+                    <small>笔试排名</small>
+                    <strong>{{user.written_rank}}/{{user.written_total}}</strong>
+                    <small>招{{user.recruit_count}}人</small>
+                </div>
+            </div>
+            <ul class="nav-list">
+                <li><a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+                    <span class="nav-icon">&#9679;</span> 首页看板</a></li>
+                <li><a href="{{ url_for('questions') }}" class="nav-item {% if request.endpoint == 'questions' %}active{% endif %}">
+                    <span class="nav-icon">&#9733;</span> 题库练习</a></li>
+                <li><a href="{{ url_for('simulate') }}" class="nav-item {% if request.endpoint == 'simulate' %}active{% endif %}">
+                    <span class="nav-icon">&#9654;</span> 模拟面试</a></li>
+                <li><a href="{{ url_for('tips') }}" class="nav-item {% if request.endpoint == 'tips' %}active{% endif %}">
+                    <span class="nav-icon">&#9998;</span> 面试技巧</a></li>
+                <li><a href="{{ url_for('bookmarks') }}" class="nav-item {% if request.endpoint == 'bookmarks' %}active{% endif %}">
+                    <span class="nav-icon">&#9829;</span> 收藏夹</a></li>
+                <li><a href="{{ url_for('records') }}" class="nav-item {% if request.endpoint == 'records' %}active{% endif %}">
+                    <span class="nav-icon">&#9776;</span> 练习记录</a></li>
+                <li><a href="{{ url_for('stats') }}" class="nav-item {% if request.endpoint == 'stats' %}active{% endif %}">
+                    <span class="nav-icon">&#9632;</span> 成绩统计</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <small>基于合肥经开区考情定制</small>
+            </div>
+        </nav>
+        <!-- 主内容 -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
