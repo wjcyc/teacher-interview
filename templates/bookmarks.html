@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}收藏夹 - 合肥经开区初中音乐考编面试系统{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>收藏夹</h2>
+</div>
+{% if bookmarks %}
+<div class="bookmark-list">
+    {% for b in bookmarks %}
+    <div class="bookmark-card">
+        <div class="bm-header">
+            <span class="badge cat-badge">{{ b.cat_name }}</span>
+            <span class="bm-type">{{ "收藏" if b.type=="bookmark" else "错题" }}</span>
+            <span class="bm-date">{{ b.created_at[:10] }}</span>
+        </div>
+        <h4 class="bm-title">{{ b.title }}</h4>
+        <p class="bm-preview">{{ b.content[:100] }}{% if b.content|length>100 %}...{% endif %}</p>
+        <div class="bm-actions">
+            <a href="{{ url_for('simulate') }}?qid={{ b.question_id }}" class="btn-outline-small">模拟</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>暂无收藏题目</p>
+    <p><small>在题库中点击 &#9825; 即可收藏题目</small></p>
+</div>
+{% endif %}
+{% endblock %}
