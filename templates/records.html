@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}练习记录 - 合肥经开区初中音乐考编面试系统{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>练习记录</h2>
+</div>
+{% if records %}
+<div class="records-list">
+    {% for r in records %}
+    <div class="record-card">
+        <div class="record-header">
+            <span class="badge {{ r.mode }}">{{ "结构化" if r.mode=="structured" else "试讲" }}</span>
+            <span class="record-date">{{ r.started_at }}</span>
+        </div>
+        <h4 class="record-title">{{ r.title }}</h4>
+        {% if r.total_score %}
+        <div class="record-score">
+            <span class="score-value">{{ "%.1f"|format(r.total_score) }}</span>
+            <span class="score-max">/ {{ "%.0f"|format(r.total_max) }}</span>
+            <span class="score-pct">({{ "%.0f"|format(r.total_score/r.total_max*100) }}%)</span>
+        </div>
+        {% endif %}
+        <div class="record-meta">
+            {% if r.preparation_seconds %}
+            <span>准备：{{ r.preparation_seconds|time }}</span>
+            {% endif %}
+            {% if r.answer_seconds %}
+            <span>答题：{{ r.answer_seconds|time }}</span>
+            {% endif %}
+        </div>
+        {% if r.notes %}
+        <div class="record-notes">{{ r.notes }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>还没有练习记录</p>
+    <a href="{{ url_for('simulate') }}" class="btn-primary">开始模拟</a>
+</div>
+{% endif %}
+{% endblock %}
