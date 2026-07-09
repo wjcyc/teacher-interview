@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}面试技巧 - 合肥经开区初中音乐考编面试系统{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>面试技巧 &amp; 避坑指南</h2>
+    <div class="tab-bar">
+        <a href="{{ url_for('tips', tab='tip') }}" class="tab {% if active_tab=='tip' %}active{% endif %}">面试技巧</a>
+        <a href="{{ url_for('tips', tab='pitfall') }}" class="tab {% if active_tab=='pitfall' %}active{% endif %}">避坑指南</a>
+    </div>
+</div>
+{% if active_tab=='tip' %}
+<div class="filter-bar">
+    {% for c in tip_categories %}
+    <a href="{{ url_for('tips', tab='tip', cat=c.id) }}" class="filter-btn {% if active_cat==c.id|string %}active{% endif %}">{{ c.name }}</a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="filter-bar">
+    {% for c in pitfall_categories %}
+    <a href="{{ url_for('tips', tab='pitfall', cat=c.id) }}" class="filter-btn {% if active_cat==c.id|string %}active{% endif %}">{{ c.name }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+<div class="tips-list">
+    {% for a in articles %}
+    <div class="tip-card">
+        <div class="tip-header">
+            <h3 class="tip-title">{{ a.title }}</h3>
+            <span class="badge cat-badge">{{ a.cat_name }}</span>
+        </div>
+        <div class="tip-body">{{ a.content|replace('\n', '<br>')|safe }}</div>
+        {% if a.answer_outline %}
+        <div class="tip-footer">
+            <strong>要点提示：</strong> {{ a.answer_outline }}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% if not articles %}
+    <div class="empty-state"><p>选择分类查看内容</p></div>
+    {% endif %}
+</div>
+{% endblock %}
